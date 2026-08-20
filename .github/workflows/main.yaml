@@ -1,0 +1,109 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------------------------------
+      # Checkout repository
+      # --------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # --------------------------------------------------
+      # Setup Node.js
+      # --------------------------------------------------
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      # --------------------------------------------------
+      # Setup pnpm
+      # --------------------------------------------------
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+          run_install: false
+
+      # --------------------------------------------------
+      # Verify Node.js and pnpm versions
+      # --------------------------------------------------
+      - name: Check versions
+        run: |
+          node --version
+          pnpm --version
+
+      # --------------------------------------------------
+      # Install dependencies
+      # --------------------------------------------------
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --------------------------------------------------
+      # Lint all workspace packages
+      # --------------------------------------------------
+      - name: Lint
+        run: pnpm lint
+
+      # --------------------------------------------------
+      # Typecheck all workspace packages
+      # --------------------------------------------------
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # --------------------------------------------------
+      # Build all workspace packages
+      # --------------------------------------------------
+      - name: Build
+        run: pnpm build
+
+# name: CI/CD
+
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
+# jobs:
+#   build-and-test:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 20
+#           cache: 'pnpm'
+
+#       - name: Install pnpm
+#         uses: pnpm/action-setup@v3
+#         with:
+#           version: 8
+#           run_install: false
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Lint
+#         run: pnpm run lint || true
+
+#       - name: Run tests
+#         run: pnpm run test
+
+#       - name: Build
+#         run: pnpm run build
