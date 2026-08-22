@@ -1,0 +1,83 @@
+# =============================================================================
+# Development stack: app(s) + Neon Local proxy
+# https://neon.com/docs/local/neon-local
+#
+# Neon Local creates an ephemeral branch per container — perfect for dev
+# isolation and integration tests.
+#
+# Usage:
+#   docker compose --env-file .env.development -f docker-compose.dev.yml up --build
+# =============================================================================
+
+services:
+  # ---------- Neon Local proxy ------------------------------------------
+  # Acts as a regular Postgres server on :5432 but is backed by an ephemeral
+  # Neon branch in your real Neon project.
+  neon-local:
+    image: neondatabase/neon_local:latest
+    container_name: lanke-neon-local
+    ports:
+      - "5432:5432"
+    environment:
+      PARENT_PROJECT_ID: ${NEON_PARENT_PROJECT_ID:-}
+      PARENT_BRANCH_ID:  ${NEON_PARENT_BRANCH_ID:-main}
+      # Creates a fresh branch on every container start.
+      CREATE_BRANCH: ${NEON_CREATE_BRANCH:-true}
+      # Auto-delete the branch when the container stops.
+      DELETE_BRANCH: ${NEON_DELETE_BRANCH:-true}
+      # Mirror writes back to the parent branch.
+      BRANCH_MIRROR: ${NEON_BRANCH_MIRROR:-false}
+      DRIVER:         ${NEON_DRIVER:-postgres}
+      # PG password the app uses to connect (matches .env.development).
+      PGUSER:     neon
+      PGPASSWORD: npg
+      PGDATABASE: neondb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neon -d neondb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- web app ----------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: apps/web
+    container_name: lanke-web-dev
+    image: lanke-web:dev
+    depends_on:
+      neon-local:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: development
+      PORT: ${WEB_PORT:-3001}
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${WEB_PORT:-3001}:${WEB_PORT:-3001}"
+
+  # ---------- user-ui app ------------------------------------------------
+  user-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: apps/user-ui
+    container_name: lanke-user-ui-dev
+    image: lanke-user-ui:dev
+    depends_on:
+      neon-local:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: development
+      PORT: ${USER_UI_PORT:-3000}
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${USER_UI_PORT:-3000}:${USER_UI_PORT:-3000}"
+
+networks:
+  default:
+    name: lanke-dev

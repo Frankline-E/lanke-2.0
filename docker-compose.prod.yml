@@ -1,0 +1,59 @@
+# =============================================================================
+# Production stack: app(s) only — DATABASE_URL points at Neon Cloud.
+#
+# Inject the real connection string via your platform's secret manager.
+# Example (local sanity-check only):
+#   docker compose --env-file .env.production -f docker-compose.prod.yml up --build
+#
+# On a real host (Fly, Railway, Render, ECS, etc.) the secrets come from
+# the platform — DO NOT pass --env-file in production.
+# =============================================================================
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: apps/web
+    image: lanke-web:prod
+    container_name: lanke-web-prod
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: production
+      PORT: ${WEB_PORT:-3001}
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${WEB_PORT:-3001}:${WEB_PORT:-3001}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${WEB_PORT:-3001}/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  user-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_DIR: apps/user-ui
+    image: lanke-user-ui:prod
+    container_name: lanke-user-ui-prod
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: production
+      PORT: ${USER_UI_PORT:-3000}
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${USER_UI_PORT:-3000}:${USER_UI_PORT:-3000}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${USER_UI_PORT:-3000}/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    name: lanke-prod

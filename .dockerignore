@@ -1,0 +1,26 @@
+node_modules
+.next
+.turbo
+out
+build
+dist
+coverage
+
+# env
+.env
+.env.*
+!.env.development
+!.env.production
+
+# misc
+.DS_Store
+*.log
+*.pem
+
+# git
+.git
+.gitignore
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
