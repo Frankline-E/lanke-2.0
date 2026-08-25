@@ -36,6 +36,7 @@
     "@workspace/typescript-config": "workspace:*",
     "dotenv": "^16.6.1",
     "drizzle-kit": "^0.31.0",
+    "eslint": "^9.39.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.2"
   }
