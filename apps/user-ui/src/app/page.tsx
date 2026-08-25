@@ -1,5 +1,6 @@
-import Image from 'next/image'
 import { Button } from '@workspace/ui/components/button'
+import { db } from '@workspace/db'
+import Image from 'next/image'
 import Link from 'next/link'
 
 export default function Home() {
